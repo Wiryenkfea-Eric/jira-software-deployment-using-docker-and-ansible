@@ -1,0 +1,80 @@
+---
+- name: Deploy Jira Data Center
+  hosts: webservers
+  become: true
+  become_user: root
+  tasks:
+    - name: Ensure Docker is installed
+      yum:
+        name: docker
+        state: present
+      tags: docker
+
+    - name: Ensure Docker service is started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      tags: docker
+
+    - name: Check Docker service status
+      command: systemctl status docker
+      register: docker_status
+      tags: debug
+
+    - name: Print Docker service status
+      debug:
+        var: docker_status.stdout
+      tags: debug
+
+    - name: Ensure Docker Compose is installed
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+      tags: docker_compose
+
+    - name: Check Docker version
+      command: docker --version
+      register: docker_version
+      tags: debug
+
+    - name: Print Docker version
+      debug:
+        var: docker_version.stdout
+      tags: debug
+
+    - name: Check Docker Compose version
+      command: /usr/local/bin/docker-compose --version
+      register: docker_compose_version
+      tags: debug
+
+    - name: Print Docker Compose version
+      debug:
+        var: docker_compose_version.stdout
+      tags: debug
+
+    - name: Create directory for Jira Docker Compose file
+      file:
+        path: /opt/jira
+        state: directory
+        mode: '0755'
+      tags: jira
+
+    - name: Copy Docker Compose file to the server
+      copy:
+        src: ~/jira-docker/docker-compose.yml
+        dest: /opt/jira/docker-compose.yml
+      tags: jira
+
+    - name: Start Jira using Docker Compose
+      command: /usr/local/bin/docker-compose up -d
+      args:
+        chdir: /opt/jira
+      register: compose_output
+      tags: jira
+
+    - name: Print Docker Compose command output
+      debug:
+        var: compose_output
+      tags: debug

@@ -1,0 +1,25 @@
+version: '3'
+services:
+  jira:
+    image: atlassian/jira-software:latest  # Pull the latest Jira Software image
+    ports:
+      - "8080:8080"
+    volumes:
+      - jira-data:/var/atlassian/jira
+    environment:
+      - ATL_JDBC_URL=jdbc:postgresql://db/jiradb
+      - ATL_JDBC_USER=jirauser
+      - ATL_JDBC_PASSWORD=jirapassword
+
+  db:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_DB=jiradb
+      - POSTGRES_USER=jirauser
+      - POSTGRES_PASSWORD=jirapassword
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  jira-data:
+  db-data:
